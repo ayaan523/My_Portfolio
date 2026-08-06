@@ -19,9 +19,24 @@ export default function ls(
 
     let out = "\n";
     const files = fileSystem.getChildren(path.p);
+    
     for (const f of files) {
-      out += `${f.name}\n`;
+      if ("children" in f) {
+        out += `${f.name}/\n`;  // folders with trailing /
+      } else {
+        out += `${f.name}\n`;
+      }
     }
+    
+    // Show current path hint
+    const pathStr = path.p.map(p => p.name).join("/").replace("//", "/");
+    const displayPath = pathStr.replace(/^\/home\/user/, "~");
+    if (displayPath === "~") {
+      out += `\n(You are home)`;
+    } else if (displayPath === "/") {
+      out += `\n(You are at root. Type "cd" to go home)`;
+    }
+    
     print(out);
   };
   return { docs, app };

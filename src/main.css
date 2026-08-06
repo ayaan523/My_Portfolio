@@ -182,7 +182,7 @@ p {
   padding: 16px;
   text-align: left;
   line-height: 1.5;
-  width: clamp(0px, 95vw, 680px);
+  width: clamp(0px, 95vw, 900px);
   margin: auto;
   box-sizing: border-box;
 }
@@ -242,7 +242,7 @@ section::after {
   position: absolute;
   bottom: 0;
   transform: translateX(-50%);
-  width: clamp(0px, 95vw, 680px);
+  width: clamp(0px, 95vw, 900px);
 }
 
 section:last-of-type {
@@ -255,7 +255,7 @@ footer {
   gap: 32px;
   flex-direction: column;
   font-size: 12px;
-  width: clamp(0px, 95vw, 680px);
+  width: clamp(0px, 95vw, 900px);
   margin: auto;
   padding: 32px 0px;
   text-align: center;

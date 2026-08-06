@@ -3,14 +3,15 @@
 
 ##   Hi there, 
 
-#  *I'm Ed H*
+#  *I'm Ayaan*
 
-##   • Software Engineer
-##   • Digital Designer
-
-
-
+##  • Software Engineer
+##  • Full-Stack
+##      Developer
 
 
-### Welcome to ED-Linux 1.0 LTS
+
+
+
+### Welcome to Ayaan-Linux 1.0 LTS
 ### →→ Scroll or type "help" to get started

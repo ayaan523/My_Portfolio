@@ -27,7 +27,7 @@ export default function show(
 
       const showAll = (p: (FolderBash | FileBash)[]) => {
         if (!p) return;
-        
+
         p.forEach((e) => {
           if (e.name === "title") return;
 
@@ -52,17 +52,39 @@ export default function show(
     }
 
     if (args.length === 0) {
-      print(`\nMissing filename`);
+      // List available .md files in current directory
+      const children = fileSystem.getChildren(path.p);
+      const mdFiles = children.filter((f: any) => f.name.endsWith(".md"));
+      const folders = children.filter((f: any) => "children" in f);
+
+      print(`\nUsage: show <filename.md>`);
+      
+      if (mdFiles.length > 0) {
+        print(`\n.md files here:`);
+        for (const f of mdFiles) {
+          print(`  ${f.name}`);
+        }
+      }
+      
+      if (folders.length > 0) {
+        print(`\nFolders you can cd into:`);
+        for (const f of folders) {
+          print(`  ${f.name}/`);
+        }
+      }
+      
+      print(`\nTip: "show -all" to view everything at once`);
       return;
     }
+
     const file = fileSystem.goto(path.p, args[0])?.at(-1);
     if (!file) {
-      print(`\nNo such file or directory`);
+      print(`\nNo such file or directory: ${args[0]}`);
       return;
     }
 
     if (!("data" in file)) {
-      print(`\n${file.name}:not a file`);
+      print(`\n${file.name}: not a file (try cd ${file.name})`);
       return;
     }
 

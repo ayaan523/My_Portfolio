@@ -46,7 +46,7 @@ export default function Bash(print: (s: string, md?: boolean) => void) {
     }
     out = out.replace(/^\/home\/user/, "~");
     if (out !== "~") out += " ";
-    print(`\nuser:${out}$`);
+    print(`\nayaan:${out}$`);
   }
 
   function input(cmd: string) {

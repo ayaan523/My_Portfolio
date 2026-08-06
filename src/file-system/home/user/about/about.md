@@ -4,8 +4,10 @@
 
 # Hi there
 
-My name is Ed Hinrichsen, I’m an award-winning web dev / digital designer and full stack software engineer. I have a passion for all things technology and design, from software engineering & machine learning to UI/UX & 3D graphics.
+My name is Ayaan Ahamed F, I'm a full-stack developer and Computer Science student focused on building scalable software and AI-driven applications. Experienced with React, Node.js, Flutter, PostgreSQL, and LLM integrations.
 
-In addition to my love of technology and design, I am also interested in education, history, economics and politics.
+I'm currently pursuing my BE in Computer Science and Design at Atria Institute of Technology (2023–2027), now in my 6th semester. Coursework includes Data Structures & Algorithms, Operating Systems, DBMS, Computer Networks, Software Engineering, AI, and Machine Learning.
 
-Type "cd ~/projects" then "ls" to see details of some of the projects I have developed over my fifteen plus years of coding experience.
+I'm also an active member of the International Association of Engineers (IAENG) and love participating in hackathons. Beyond code, I enjoy sketching, cricket, and UI/UX wireframing in Figma.
+
+Type "cd ~/projects" then "ls" to see details of some of the projects I have developed.

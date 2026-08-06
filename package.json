@@ -1,11 +1,11 @@
 {
   "author": {
-    "name": "Ed Hinrichsen",
-    "url": "https://www.edwardh.io"
+    "name": "Ayaan Ahamed F",
+    "url": "https://www.linkedin.com/in/ayaanf-dev/"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/edhinrichsen/retro-computer-website.git"
+    "url": "git+https://github.com/ayaanf-dev/retro-computer-website.git"
   },
   "license": "MIT",
   "name": "retro-computer-website",
