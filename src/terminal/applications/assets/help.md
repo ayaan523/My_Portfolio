@@ -11,6 +11,10 @@
 
 ## • Type*show* to render .md files
 
+## • Type*projects* to list public GitHub projects
+
+## • Type*projects <name>* to view a project's README
+
 ## • Use ↑ and ↓ keys to scroll
 
 ### Tip: try typing "show -all"

@@ -11,4 +11,4 @@ Built responsive interface for creating custom automata and testing acceptance c
 
 Designed dynamic visualization of states and transitions for better understanding of computation models.
 
-Structured modular and scalable codebase for extending additional computation algorithms.
+Structured modular and scalable codebase for extending additional computation algorithms.x

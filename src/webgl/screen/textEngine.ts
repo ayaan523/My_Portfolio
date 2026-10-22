@@ -658,35 +658,58 @@ export default function ScreenTextEngine(
   }
 
   function placeImage(val: string) {
-    const urlMatch = val.match(/\(.+\)/);
+    const urlMatch = val.match(/\(([^)]+)\)/);
     if (!urlMatch || urlMatch.length === 0) return;
-    const [url, rawParams] = urlMatch[0].slice(1, -1).split("?");
-    const params = new URLSearchParams(rawParams);
-
-    const aspectRatio = parseFloat(params.get("aspect") ?? "");
-    if (Number.isNaN(aspectRatio))
-      throw new Error(
-        `Error for image at: '${url}'. Image must have aspect ratio like this: '/path/to/image?aspect=1.5'`
-      );
+    const imageUrl = new URL(urlMatch[1], window.location.href);
+    const params = new URLSearchParams(imageUrl.search);
+    const aspectParam = parseFloat(params.get("aspect") ?? "");
+    const aspectRatio =
+      Number.isFinite(aspectParam) && aspectParam > 0 ? aspectParam : undefined;
     const widthParam = parseFloat(params.get("width") ?? "");
-    const width = Number.isNaN(widthParam) ? 1 : widthParam;
-
-    const height = width / aspectRatio;
+    const width = Math.min(
+      Number.isFinite(widthParam) && widthParam > 0 ? widthParam : 1.33,
+      1.33
+    );
+    const noFlow = params.get("noflow");
+    params.delete("aspect");
+    params.delete("width");
+    params.delete("noflow");
+    imageUrl.search = params.toString();
+    const height = aspectRatio === undefined ? 0.75 : width / aspectRatio;
+    const imageTop = charNextLoc.y;
 
     const imageFrame = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(width, height, 1, 1),
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
 
-    imageFrame.position.set(1.4 / 2, -height * 0.5 - charNextLoc.y, -0.02);
-    if (!params.get("noflow")) charNextLoc.y += height;
+    imageFrame.position.set(1.4 / 2, -height * 0.5 - imageTop, -0.02);
+    if (!noFlow) charNextLoc.y += height;
     rootGroup.add(imageFrame);
 
     const textureLoader = new THREE.TextureLoader();
-    textureLoader.load(url, (tex) => {
-      tex.magFilter = THREE.NearestFilter;
-      imageFrame.material = new THREE.MeshBasicMaterial({ map: tex });
-    });
+    textureLoader.load(
+      imageUrl.href,
+      (tex) => {
+        tex.magFilter = THREE.NearestFilter;
+        imageFrame.material = new THREE.MeshBasicMaterial({ map: tex });
+        if (aspectRatio === undefined) {
+          const imageAspect = tex.image.width / tex.image.height;
+          const imageWidth = Math.min(width, height * imageAspect);
+          const imageHeight = imageWidth / imageAspect;
+          imageFrame.geometry.dispose();
+          imageFrame.geometry = new THREE.PlaneBufferGeometry(
+            imageWidth,
+            imageHeight,
+            1,
+            1
+          );
+          imageFrame.position.y = -imageTop - height / 2;
+        }
+      },
+      undefined,
+      (error) => console.error(`Failed to load image: ${imageUrl.href}`, error)
+    );
   }
 
   function tick(deltaTime: number, elapsedTime: number) {

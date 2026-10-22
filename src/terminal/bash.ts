@@ -49,7 +49,7 @@ export default function Bash(print: (s: string, md?: boolean) => void) {
     print(`\nayaan:${out}$`);
   }
 
-  function input(cmd: string) {
+  async function input(cmd: string) {
     cmd = cmd.replaceAll(/\s+/g, " ");
     const cmdSplit = cmd.split(" ");
     const cmdName = cmdSplit[0];
@@ -57,10 +57,11 @@ export default function Bash(print: (s: string, md?: boolean) => void) {
     console.log("cmd", cmdName, cmdArgs);
 
     if (cmd) {
+      print("\n");
       const app = getApp(cmdName);
       if (app) {
         const [args, options] = splitArgs(cmdArgs);
-        app(args, options);
+        await app(args, options);
       } else cmdNotFound(cmdName);
     }
 

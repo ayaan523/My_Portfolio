@@ -7,6 +7,7 @@ import mkdir from "./mkdir";
 import pwd from "./pwd";
 import show from "./show";
 import touch from "./touch";
+import projects from "./projects";
 // @ts-ignore
 import helpMD from "./assets/help.md?raw";
 
@@ -18,7 +19,7 @@ export default function Applications(
     let helpStr: string = helpMD;
     Object.entries(apps).forEach((entry) => {
       const [key, value] = entry;
-      helpStr += `### ${value.docs.name} - ${value.docs.short}\n`;
+      helpStr += `\n\n- ${value.docs.name} - ${value.docs.short}\n`;
     });
     console.log(helpStr);
     print(helpStr, true);
@@ -27,6 +28,7 @@ export default function Applications(
     ls: ls(print, path),
     cd: cd(print, path),
     show: show(print, path),
+    projects: projects(print),
     echo: echo(print, path),
     pwd: pwd(print, path),
     mkdir: mkdir(print, path),

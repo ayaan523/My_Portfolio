@@ -24,3 +24,9 @@ npm run build
 ```
 
 # My_Portfolio
+
+## Live GitHub projects
+
+The main page loads the public, non-fork repositories owned by `ayaan523` and displays each repository's README and images. README content is loaded as its card approaches the viewport. A clickable **Live Demo** link appears when a repository has a Website URL configured in its GitHub About settings.
+
+In the retro computer terminal, run `projects` to list repositories or `projects <repository-name>` to view a README. New public repositories appear without a site rebuild. GitHub's unauthenticated API rate limits apply.

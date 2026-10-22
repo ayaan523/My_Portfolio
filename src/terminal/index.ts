@@ -24,6 +24,7 @@ export default function Terminal(screenTextEngine: {
 }) {
   const canvas = document.querySelector("canvas.webgl") as HTMLCanvasElement;
   const textarea = document.getElementById("textarea") as HTMLTextAreaElement;
+  let commandRunning = false;
   textarea.value = "";
   textarea.readOnly = true;
   textarea.blur();
@@ -49,12 +50,20 @@ export default function Terminal(screenTextEngine: {
 
   let oldText = "";
   function onInput() {
+    if (commandRunning) return;
     const change = stringEditDistance(oldText, textarea.value);
     oldText = textarea.value;
     if (change) screenTextEngine.userInput(change, textarea.selectionStart);
     screenTextEngine.scrollToEnd();
   }
   textarea.addEventListener("input", onInput, false);
+
+  window.addEventListener("keypress", (e) => {
+    if (commandRunning) {
+      e.preventDefault();
+      return;
+    }
+  }, true);
 
   canvas.addEventListener("pointerup", (ev) => {
     if (ev.pointerType === "mouse") {
@@ -87,7 +96,10 @@ export default function Terminal(screenTextEngine: {
     // textarea
     if (e.key === "Enter") {
       screenTextEngine.freezeInput();
-      bash.input(textarea.value);
+      commandRunning = true;
+      void bash.input(textarea.value).finally(() => {
+        commandRunning = false;
+      });
 
       textarea.value = "";
       const change = stringEditDistance(oldText, textarea.value);

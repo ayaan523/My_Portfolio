@@ -1,7 +1,9 @@
 import "./main.css";
 import WebGL from "./webgl";
+import renderProjects from "./projects";
 
 WebGL();
+void renderProjects();
 
 const root = document.documentElement;
 
