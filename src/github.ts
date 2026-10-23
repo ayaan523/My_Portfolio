@@ -18,14 +18,20 @@ type GitHubReadme = {
 };
 
 const owner = "ayaan523";
-const repositoryCacheKey = `github-repositories-v2:${owner}`;
+const repositoryCacheKey = `github-repositories:${owner}`;
+const previousRepositoryCacheKey = `github-repositories-v2:${owner}`;
 const readmeCacheKey = "github-readmes";
 const cacheDuration = 60 * 60 * 1000;
 
 export async function getRepositories() {
-  const cached = readCache<Repository[]>(repositoryCacheKey);
+  const cached = [
+    readCache<Repository[]>(repositoryCacheKey),
+    readCache<Repository[]>(previousRepositoryCacheKey),
+  ]
+    .filter((value): value is NonNullable<typeof value> => Boolean(value))
+    .sort((a, b) => b.savedAt - a.savedAt)[0];
   if (cached && Date.now() - cached.savedAt < cacheDuration)
-    return cached.value;
+    return cached.value.map(normalizeRepository);
 
   const repositories: Repository[] = [];
   let nextUrl: string | null =
@@ -43,16 +49,16 @@ export async function getRepositories() {
         Number.isFinite(resetAt)
           ? ` Rate limit resets at ${new Date(resetAt * 1000).toLocaleTimeString()}.`
           : "";
-      if (cached) return cached.value;
+      if (cached) {
+        console.warn("GitHub is unavailable; showing the last saved project list.");
+        return cached.value.map(normalizeRepository);
+      }
       throw new Error(`GitHub API request failed (${response.status}).${resetMessage}`);
     }
 
     const page = (await response.json()) as Repository[];
     repositories.push(
-      ...page.map((repository) => ({
-        ...repository,
-        topics: Array.isArray(repository.topics) ? repository.topics : [],
-      }))
+      ...page.map(normalizeRepository)
     );
     const nextLink = response.headers
       .get("Link")
@@ -64,6 +70,13 @@ export async function getRepositories() {
   const publicRepositories = repositories.filter((repository) => !repository.fork);
   writeCache(repositoryCacheKey, publicRepositories);
   return publicRepositories;
+}
+
+function normalizeRepository(repository: Repository): Repository {
+  return {
+    ...repository,
+    topics: Array.isArray(repository.topics) ? repository.topics : [],
+  };
 }
 
 export async function getReadme(repository: Repository, readmePath?: string) {
