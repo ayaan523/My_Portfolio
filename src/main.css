@@ -267,7 +267,7 @@ section:last-of-type {
 
 .project-card.has-preview {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   align-items: center;
   column-gap: clamp(24px, 5vw, 64px);
 }
@@ -391,7 +391,7 @@ section:last-of-type {
 
 .project-detail-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(24px, 5vw, 64px);
   padding: clamp(18px, 4vw, 40px);
