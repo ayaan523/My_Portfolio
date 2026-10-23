@@ -28,7 +28,11 @@ export default function Terminal(screenTextEngine: {
   textarea.value = "";
   textarea.readOnly = true;
   textarea.blur();
-  screenTextEngine.placeMarkdown(titleText);
+  const dateTime = new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date());
+  screenTextEngine.placeMarkdown(`### ${dateTime}\n\n${titleText}`);
   screenTextEngine.placeText("ayaan:~$");   // ← CHANGED: was "user:~$"
 
   const bash = Bash((s, md = false) => {

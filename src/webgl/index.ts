@@ -265,14 +265,6 @@ export default function WebGL() {
         computerGroup.rotation.z = valMap(scroll, [0, 1], [-Math.PI / 2, 0]);
       else computerGroup.rotation.z = 0;
 
-      if (assists.crtMesh.morphTargetInfluences) {
-        assists.crtMesh.morphTargetInfluences[0] = valMap(
-          zoomFac,
-          [0, 0.1],
-          [0.5, 0]
-        );
-      }
-
       screen.tick(deltaTime, elapsedTime);
 
       renderer.setRenderTarget(null);

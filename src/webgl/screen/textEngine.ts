@@ -43,7 +43,7 @@ const h3Font: FontInfo = (function () {
   return { font: undefined, size, height, width, leading, tracking };
 })();
 
-declare const screenWidth: number;
+const screenWidth = 1.33;
 
 const paragraphFont: FontInfo = (function () {
   const size = 0.0275;

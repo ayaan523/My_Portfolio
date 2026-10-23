@@ -189,21 +189,39 @@ function validHomepage(homepage: string | null) {
   return url.startsWith("http://") || url.startsWith("https://") ? url : "";
 }
 
-async function loadProjectCard(article: HTMLElement, repository: Repository) {
-  const readme = article.querySelector<HTMLElement>(".project-readme");
-  if (!readme || readme.dataset.loaded) return;
-  readme.dataset.loaded = "true";
-  readme.textContent = "Loading README...";
+type ProjectDetails = {
+  image?: string;
+  caseStudy?: string;
+  readmePath?: string;
+};
+
+const projectDetails: Record<string, ProjectDetails> = {
+  Trenz: {
+    image: new URL("./img/trenz.png", import.meta.url).href,
+    readmePath: "trenz/README.md",
+  },
+  shadow: {
+    image: new URL("./img/shadow.png", import.meta.url).href,
+  },
+};
+
+async function loadProjectPreview(article: HTMLElement, repository: Repository) {
+  const image = article.querySelector<HTMLImageElement>(".project-preview img");
+  if (!image || image.hasAttribute("src")) return;
 
   try {
-    const markdown = await getReadme(repository);
-    readme.replaceChildren();
-    renderReadme(readme, markdown, repository);
+    const markdown = await getReadme(repository, projectDetails[repository.name]?.readmePath);
+    const firstImage = markdown.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+    if (firstImage) {
+      const imageUrl = safeUrl(firstImage[2]);
+      if (imageUrl.startsWith("http")) {
+        image.src = imageUrl;
+        image.alt = firstImage[1] || `${repository.name} project preview`;
+        article.classList.add("has-preview");
+      }
+    }
   } catch (error) {
-    readme.dataset.loaded = "";
-    readme.textContent =
-      error instanceof Error ? `README unavailable: ${error.message}` : "README unavailable.";
-    readme.classList.add("project-error");
+    console.warn(`Unable to load preview for ${repository.full_name}`, error);
   }
 }
 
@@ -211,9 +229,21 @@ function createProjectCard(repository: Repository) {
   const article = document.createElement("article");
   article.className = "project-card";
 
+  const metadata = projectDetails[repository.name];
+  const preview = document.createElement("figure");
+  preview.className = "project-preview";
+  const previewImage = document.createElement("img");
+  previewImage.alt = `${repository.name} project preview`;
+  previewImage.loading = "lazy";
+  if (metadata?.image) {
+    previewImage.src = metadata.image;
+    article.classList.add("has-preview");
+  }
+  preview.append(previewImage);
+
   const header = document.createElement("header");
   const title = document.createElement("h2");
-  title.textContent = repository.name;
+  title.textContent = repository.name.replace(/[-_]/g, " ");
   header.append(title);
 
   const summary = document.createElement("p");
@@ -221,26 +251,23 @@ function createProjectCard(repository: Repository) {
   summary.textContent = repository.description ?? "No repository description.";
   header.append(summary);
 
-  const meta = document.createElement("p");
-  meta.className = "project-meta";
-  meta.textContent = [
-    repository.language,
-    `Updated ${new Date(repository.updated_at).toLocaleDateString()}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  header.append(meta);
+  const technologies = repository.topics;
+  if (technologies.length) {
+    const label = document.createElement("p");
+    label.className = "project-tech-label";
+    label.textContent = "Tech stack";
+    const techStack = document.createElement("ul");
+    techStack.className = "project-tech";
+    for (const technology of technologies) {
+      const tag = document.createElement("li");
+      tag.textContent = technology;
+      techStack.append(tag);
+    }
+    header.append(label, techStack);
+  }
 
   const actions = document.createElement("div");
   actions.className = "project-actions";
-  const githubLink = document.createElement("a");
-  githubLink.className = "btn";
-  githubLink.href = repository.html_url;
-  githubLink.target = "_blank";
-  githubLink.rel = "noopener noreferrer";
-  githubLink.textContent = "GitHub";
-  actions.append(githubLink);
-
   const homepage = validHomepage(repository.homepage);
   if (homepage) {
     const demoLink = document.createElement("a");
@@ -248,17 +275,136 @@ function createProjectCard(repository: Repository) {
     demoLink.href = homepage;
     demoLink.target = "_blank";
     demoLink.rel = "noopener noreferrer";
-    demoLink.textContent = "Live Demo";
+    demoLink.textContent = "Visit site";
     actions.append(demoLink);
   }
+
+  const githubLink = document.createElement("a");
+  githubLink.className = "btn";
+  githubLink.href = repository.html_url;
+  githubLink.target = "_blank";
+  githubLink.rel = "noopener noreferrer";
+  githubLink.textContent = "Code";
+  actions.append(githubLink);
+
+  const caseStudy = metadata?.caseStudy
+    ? validHomepage(metadata.caseStudy)
+    : "";
+  if (caseStudy) {
+    const caseStudyLink = document.createElement("a");
+    caseStudyLink.className = "btn";
+    caseStudyLink.href = caseStudy;
+    caseStudyLink.target = "_blank";
+    caseStudyLink.rel = "noopener noreferrer";
+    caseStudyLink.textContent = "Case study";
+    actions.append(caseStudyLink);
+  }
+  const detailsLink = document.createElement("a");
+  detailsLink.className = "btn project-details-link";
+  detailsLink.href = `/project.html?repo=${encodeURIComponent(repository.name)}`;
+  detailsLink.textContent = "Project details";
+  actions.append(detailsLink);
   header.append(actions);
 
-  const readme = document.createElement("div");
-  readme.className = "project-readme";
-  readme.setAttribute("aria-live", "polite");
-
-  article.append(header, readme);
+  article.append(preview, header);
   return article;
+}
+
+export async function renderProjectDetail() {
+  const status = document.querySelector<HTMLElement>(".project-page-status");
+  const content = document.querySelector<HTMLElement>(".project-page-content");
+  if (!status || !content) return;
+
+  const repositoryName = new URLSearchParams(location.search).get("repo");
+  if (!repositoryName) {
+    status.textContent = "No project was selected.";
+    return;
+  }
+
+  try {
+    const repositories = await getRepositories();
+    const repository = repositories.find(({ name }) => name === repositoryName);
+    if (!repository) {
+      status.textContent = "That public project could not be found.";
+      return;
+    }
+
+    const metadata = projectDetails[repository.name];
+    const title = repository.name.replace(/[-_]/g, " ");
+    document.title = `${title} – Ayaan Ahamed F`;
+    const header = content.querySelector<HTMLElement>(".project-detail-header");
+    const image = content.querySelector<HTMLImageElement>(".project-detail-image");
+    const description = content.querySelector<HTMLElement>(".project-detail-description");
+    const stack = content.querySelector<HTMLElement>(".project-detail-stack");
+    const actions = content.querySelector<HTMLElement>(".project-detail-actions");
+    const readme = content.querySelector<HTMLElement>(".project-readme");
+    if (!header || !image || !description || !stack || !actions || !readme) return;
+
+    header.textContent = title;
+    description.textContent = repository.description ?? "No repository description.";
+    image.alt = `${title} project preview`;
+    if (metadata?.image) image.src = metadata.image;
+
+    const technologies = repository.topics;
+    const stackLabel = document.querySelector<HTMLElement>(".project-detail-stack-label");
+    if (technologies.length && stackLabel) stackLabel.hidden = false;
+    for (const technology of technologies) {
+      const tag = document.createElement("li");
+      tag.textContent = technology;
+      stack.append(tag);
+    }
+
+    const homepage = validHomepage(repository.homepage);
+    if (homepage) {
+      const siteLink = document.createElement("a");
+      siteLink.className = "btn";
+      siteLink.href = homepage;
+      siteLink.target = "_blank";
+      siteLink.rel = "noopener noreferrer";
+      siteLink.textContent = "Visit site";
+      actions.append(siteLink);
+    }
+    const codeLink = document.createElement("a");
+    codeLink.className = "btn";
+    codeLink.href = repository.html_url;
+    codeLink.target = "_blank";
+    codeLink.rel = "noopener noreferrer";
+    codeLink.textContent = "Code";
+    actions.append(codeLink);
+
+    if (metadata?.caseStudy) {
+      const caseStudy = validHomepage(metadata.caseStudy);
+      if (caseStudy) {
+        const caseStudyLink = document.createElement("a");
+        caseStudyLink.className = "btn";
+        caseStudyLink.href = caseStudy;
+        caseStudyLink.target = "_blank";
+        caseStudyLink.rel = "noopener noreferrer";
+        caseStudyLink.textContent = "Case study";
+        actions.append(caseStudyLink);
+      }
+    }
+
+    try {
+      const markdown = await getReadme(repository, metadata?.readmePath);
+      renderReadme(readme, markdown, repository);
+      const readmeImage = readme.querySelector<HTMLImageElement>("img");
+      if (!image.hasAttribute("src") && readmeImage) image.src = readmeImage.src;
+    } catch (error) {
+      readme.textContent =
+        error instanceof Error ? `README unavailable: ${error.message}` : "README unavailable.";
+      readme.classList.add("project-error");
+    }
+    if (!image.hasAttribute("src")) image.closest("figure")?.remove();
+    status.remove();
+    content.hidden = false;
+  } catch (error) {
+    status.textContent =
+      error instanceof Error
+        ? `Project could not be loaded: ${error.message}`
+        : "Project could not be loaded.";
+    status.classList.add("project-error");
+  }
 }
 
 export default async function renderProjects() {
@@ -275,13 +421,11 @@ export default async function renderProjects() {
     }
 
     status.remove();
-    const loads: Promise<void>[] = [];
     for (const repository of repositories) {
       const card = createProjectCard(repository);
       container.append(card);
-      loads.push(loadProjectCard(card, repository));
+      void loadProjectPreview(card, repository);
     }
-    await Promise.all(loads);
   } catch (error) {
     status.textContent =
       error instanceof Error

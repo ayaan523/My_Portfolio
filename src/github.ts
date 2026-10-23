@@ -3,6 +3,7 @@ export type Repository = {
   full_name: string;
   description: string | null;
   language: string | null;
+  topics: string[];
   updated_at: string;
   html_url: string;
   homepage: string | null;
@@ -17,7 +18,7 @@ type GitHubReadme = {
 };
 
 const owner = "ayaan523";
-const repositoryCacheKey = `github-repositories:${owner}`;
+const repositoryCacheKey = `github-repositories-v2:${owner}`;
 const readmeCacheKey = "github-readmes";
 const cacheDuration = 60 * 60 * 1000;
 
@@ -46,7 +47,13 @@ export async function getRepositories() {
       throw new Error(`GitHub API request failed (${response.status}).${resetMessage}`);
     }
 
-    repositories.push(...((await response.json()) as Repository[]));
+    const page = (await response.json()) as Repository[];
+    repositories.push(
+      ...page.map((repository) => ({
+        ...repository,
+        topics: Array.isArray(repository.topics) ? repository.topics : [],
+      }))
+    );
     const nextLink = response.headers
       .get("Link")
       ?.split(",")
@@ -59,14 +66,20 @@ export async function getRepositories() {
   return publicRepositories;
 }
 
-export async function getReadme(repository: Repository) {
+export async function getReadme(repository: Repository, readmePath?: string) {
   const cached = readCache<Record<string, string>>(readmeCacheKey);
   const cachedMarkdown = cached?.value[repository.full_name];
   if (cachedMarkdown && Date.now() - cached.savedAt < cacheDuration)
     return cachedMarkdown;
 
   try {
-    const filenames = ["README.md", "readme.md", "README.markdown", "README"];
+    const filenames = [
+      ...(readmePath ? [readmePath] : []),
+      "README.md",
+      "readme.md",
+      "README.markdown",
+      "README",
+    ];
     for (const filename of filenames) {
       const path = `https://raw.githubusercontent.com/${repository.full_name}/${encodeURIComponent(repository.default_branch)}/${filename}`;
       const response = await fetch(path);
