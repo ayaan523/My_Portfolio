@@ -189,6 +189,12 @@ function validHomepage(homepage: string | null) {
   return url.startsWith("http://") || url.startsWith("https://") ? url : "";
 }
 
+function getTechStack(repository: Repository) {
+  return repository.topics.length
+    ? repository.topics
+    : [repository.language ?? "Not specified"];
+}
+
 type ProjectDetails = {
   image?: string;
   caseStudy?: string;
@@ -205,38 +211,46 @@ const projectDetails: Record<string, ProjectDetails> = {
   },
 };
 
-async function loadProjectPreview(article: HTMLElement, repository: Repository) {
-  const image = article.querySelector<HTMLImageElement>(".project-preview img");
-  if (!image || image.hasAttribute("src")) return;
-
+async function getProjectPreview(repository: Repository) {
+  const metadata = projectDetails[repository.name];
+  if (metadata?.image) return { src: metadata.image, alt: `${repository.name} project preview` };
   try {
-    const markdown = await getReadme(repository, projectDetails[repository.name]?.readmePath);
+    const markdown = await getReadme(repository, metadata?.readmePath);
     const firstImage = markdown.match(/!\[([^\]]*)\]\(([^)]+)\)/);
     if (firstImage) {
       const imageUrl = safeUrl(firstImage[2]);
-      if (imageUrl.startsWith("http")) {
-        image.src = imageUrl;
-        image.alt = firstImage[1] || `${repository.name} project preview`;
-        article.classList.add("has-preview");
-      }
+      if (imageUrl.startsWith("http"))
+        return {
+          src: imageUrl,
+          alt: firstImage[1] || `${repository.name} project preview`,
+        };
     }
   } catch (error) {
     console.warn(`Unable to load preview for ${repository.full_name}`, error);
   }
+  return undefined;
 }
 
-function createProjectCard(repository: Repository) {
+function createProjectCard(
+  repository: Repository,
+  projectPreview?: { src: string; alt: string }
+) {
   const article = document.createElement("article");
   article.className = "project-card";
 
   const metadata = projectDetails[repository.name];
   const preview = document.createElement("figure");
   preview.className = "project-preview";
+  const homepage = validHomepage(repository.homepage);
+  preview.dataset.windowTitle = homepage
+    ? new URL(homepage).hostname
+    : repository.name;
   const previewImage = document.createElement("img");
   previewImage.alt = `${repository.name} project preview`;
   previewImage.loading = "lazy";
-  if (metadata?.image) {
-    previewImage.src = metadata.image;
+  if (projectPreview) {
+    previewImage.src = projectPreview.src;
+    previewImage.alt = projectPreview.alt;
     article.classList.add("has-preview");
   }
   preview.append(previewImage);
@@ -251,24 +265,20 @@ function createProjectCard(repository: Repository) {
   summary.textContent = repository.description ?? "No repository description.";
   header.append(summary);
 
-  const technologies = repository.topics;
-  if (technologies.length) {
-    const label = document.createElement("p");
-    label.className = "project-tech-label";
-    label.textContent = "Tech stack";
-    const techStack = document.createElement("ul");
-    techStack.className = "project-tech";
-    for (const technology of technologies) {
-      const tag = document.createElement("li");
-      tag.textContent = technology;
-      techStack.append(tag);
-    }
-    header.append(label, techStack);
+  const label = document.createElement("p");
+  label.className = "project-tech-label";
+  label.textContent = "Tech stack";
+  const techStack = document.createElement("ul");
+  techStack.className = "project-tech";
+  for (const technology of getTechStack(repository)) {
+    const tag = document.createElement("li");
+    tag.textContent = technology;
+    techStack.append(tag);
   }
+  header.append(label, techStack);
 
   const actions = document.createElement("div");
   actions.className = "project-actions";
-  const homepage = validHomepage(repository.homepage);
   if (homepage) {
     const demoLink = document.createElement("a");
     demoLink.className = "btn";
@@ -332,22 +342,39 @@ export async function renderProjectDetail() {
     const metadata = projectDetails[repository.name];
     const title = repository.name.replace(/[-_]/g, " ");
     document.title = `${title} – Ayaan Ahamed F`;
+    const projectNumber = content.querySelector<HTMLElement>(".project-detail-number");
+    const category = content.querySelector<HTMLElement>(".project-detail-category");
+    const liveLabel = content.querySelector<HTMLElement>(".project-detail-live");
     const header = content.querySelector<HTMLElement>(".project-detail-header");
     const image = content.querySelector<HTMLImageElement>(".project-detail-image");
+    const preview = content.querySelector<HTMLElement>(".project-detail-preview");
     const description = content.querySelector<HTMLElement>(".project-detail-description");
     const stack = content.querySelector<HTMLElement>(".project-detail-stack");
     const actions = content.querySelector<HTMLElement>(".project-detail-actions");
     const readme = content.querySelector<HTMLElement>(".project-readme");
-    if (!header || !image || !description || !stack || !actions || !readme) return;
+    if (
+      !projectNumber ||
+      !category ||
+      !liveLabel ||
+      !header ||
+      !image ||
+      !preview ||
+      !description ||
+      !stack ||
+      !actions ||
+      !readme
+    )
+      return;
 
+    projectNumber.textContent = `// PROJECT ${String(repositories.indexOf(repository) + 1).padStart(2, "0")}`;
+    category.textContent = repository.topics[0] ?? repository.language ?? "Featured project";
+    liveLabel.hidden = !validHomepage(repository.homepage);
     header.textContent = title;
     description.textContent = repository.description ?? "No repository description.";
     image.alt = `${title} project preview`;
     if (metadata?.image) image.src = metadata.image;
 
-    const technologies = repository.topics;
-    const stackLabel = document.querySelector<HTMLElement>(".project-detail-stack-label");
-    if (technologies.length && stackLabel) stackLabel.hidden = false;
+    const technologies = getTechStack(repository);
     for (const technology of technologies) {
       const tag = document.createElement("li");
       tag.textContent = technology;
@@ -361,7 +388,7 @@ export async function renderProjectDetail() {
       siteLink.href = homepage;
       siteLink.target = "_blank";
       siteLink.rel = "noopener noreferrer";
-      siteLink.textContent = "Visit site";
+      siteLink.textContent = "Live site ↗";
       actions.append(siteLink);
     }
     const codeLink = document.createElement("a");
@@ -369,7 +396,7 @@ export async function renderProjectDetail() {
     codeLink.href = repository.html_url;
     codeLink.target = "_blank";
     codeLink.rel = "noopener noreferrer";
-    codeLink.textContent = "Code";
+    codeLink.textContent = "Source on GitHub ↗";
     actions.append(codeLink);
 
     if (metadata?.caseStudy) {
@@ -395,7 +422,7 @@ export async function renderProjectDetail() {
         error instanceof Error ? `README unavailable: ${error.message}` : "README unavailable.";
       readme.classList.add("project-error");
     }
-    if (!image.hasAttribute("src")) image.closest("figure")?.remove();
+    preview.hidden = !image.hasAttribute("src");
     status.remove();
     content.hidden = false;
   } catch (error) {
@@ -411,7 +438,11 @@ export default async function renderProjects() {
   const section = document.querySelector<HTMLElement>(".projects-section");
   const container = section?.querySelector<HTMLElement>(".projects-list");
   const status = section?.querySelector<HTMLElement>(".projects-status");
-  if (!container || !status) return;
+  const pagination = section?.querySelector<HTMLElement>(".projects-pagination");
+  const previous = section?.querySelector<HTMLButtonElement>(".projects-previous");
+  const next = section?.querySelector<HTMLButtonElement>(".projects-next");
+  const pageStatus = section?.querySelector<HTMLElement>(".projects-page-status");
+  if (!container || !status || !pagination || !previous || !next || !pageStatus) return;
 
   try {
     const repositories = await getRepositories();
@@ -420,12 +451,50 @@ export default async function renderProjects() {
       return;
     }
 
+    const projectsWithPreviews = await Promise.all(
+      repositories.map(async (repository) => ({
+        repository,
+        preview: await getProjectPreview(repository),
+      }))
+    );
+    projectsWithPreviews.sort(
+      (a, b) => Number(Boolean(b.preview)) - Number(Boolean(a.preview))
+    );
+    const pageSize = Math.max(
+      6,
+      projectsWithPreviews.filter(({ preview }) => preview).length
+    );
+    const pageCount = Math.ceil(projectsWithPreviews.length / pageSize);
+    let currentPage = 0;
+    const renderPage = () => {
+      container.replaceChildren();
+      for (const project of projectsWithPreviews.slice(
+        currentPage * pageSize,
+        (currentPage + 1) * pageSize
+      )) {
+        const card = createProjectCard(project.repository, project.preview);
+        container.append(card);
+      }
+      previous.disabled = currentPage === 0;
+      next.disabled = currentPage === pageCount - 1;
+      pageStatus.textContent = `Page ${currentPage + 1} of ${pageCount}`;
+    };
+
+    previous.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage--;
+        renderPage();
+      }
+    });
+    next.addEventListener("click", () => {
+      if (currentPage < pageCount - 1) {
+        currentPage++;
+        renderPage();
+      }
+    });
+    pagination.hidden = pageCount < 2;
     status.remove();
-    for (const repository of repositories) {
-      const card = createProjectCard(repository);
-      container.append(card);
-      void loadProjectPreview(card, repository);
-    }
+    renderPage();
   } catch (error) {
     status.textContent =
       error instanceof Error

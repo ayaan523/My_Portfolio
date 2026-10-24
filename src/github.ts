@@ -18,7 +18,7 @@ type GitHubReadme = {
 };
 
 const owner = "ayaan523";
-const repositoryCacheKey = `github-repositories:${owner}`;
+const repositoryCacheKey = `github-repositories-v3:${owner}`;
 const previousRepositoryCacheKey = `github-repositories-v2:${owner}`;
 const readmeCacheKey = "github-readmes";
 const cacheDuration = 60 * 60 * 1000;

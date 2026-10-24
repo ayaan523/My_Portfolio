@@ -653,8 +653,12 @@ export default function ScreenTextEngine(
     if (rootGroup.position.y < 0) rootGroup.position.y = 0;
     if (rootGroup.position.y > maxScroll) rootGroup.position.y = maxScroll;
   }
-  function scrollToEnd() {
-    if (rootGroup.position.y !== maxScroll) rootGroup.position.y = maxScroll;
+  let endPadding = 0;
+  function scrollToEnd(paddingLines = 3) {
+    const nextPadding = h2Font.leading * paddingLines;
+    maxScroll += nextPadding - endPadding;
+    endPadding = nextPadding;
+    rootGroup.position.y = maxScroll;
   }
 
   function placeImage(val: string) {

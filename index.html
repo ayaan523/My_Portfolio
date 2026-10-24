@@ -147,6 +147,11 @@
         </p>
         <p class="projects-status" role="status">Loading GitHub projects...</p>
         <div class="projects-list"></div>
+        <div class="projects-pagination" role="navigation" aria-label="Project pages" hidden>
+          <button class="btn projects-previous" type="button">Previous</button>
+          <span class="projects-page-status" aria-live="polite"></span>
+          <button class="btn projects-next" type="button">Next</button>
+        </div>
       </section>
 
       <section>
@@ -164,7 +169,15 @@
       </section>
     </main>
 
-    <input type="text" id="textarea" readonly />
+    <input
+      type="text"
+      id="textarea"
+      inputmode="text"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      readonly
+    />
     <div id="loading">
       <h2>Booting...</h2>
       <div id="loading-bar">

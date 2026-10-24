@@ -19,7 +19,7 @@ export default function Terminal(screenTextEngine: {
       moveView: boolean;
     }
   ): void;
-  scrollToEnd: () => void;
+  scrollToEnd: (paddingLines?: number) => void;
   freezeInput: () => void;
 }) {
   const canvas = document.querySelector("canvas.webgl") as HTMLCanvasElement;
@@ -34,6 +34,7 @@ export default function Terminal(screenTextEngine: {
   }).format(new Date());
   screenTextEngine.placeMarkdown(`### ${dateTime}\n\n${titleText}`);
   screenTextEngine.placeText("ayaan:~$");   // ← CHANGED: was "user:~$"
+  screenTextEngine.scrollToEnd(3);
 
   const bash = Bash((s, md = false) => {
     if (md) {
@@ -69,15 +70,11 @@ export default function Terminal(screenTextEngine: {
     }
   }, true);
 
-  canvas.addEventListener("pointerup", (ev) => {
-    if (ev.pointerType === "mouse") {
-      textarea.readOnly = false;
-      textarea.focus();
-      textarea.setSelectionRange(lastSelection, lastSelection);
-    } else {
-      textarea.readOnly = true;
-      textarea.blur();
-    }
+  canvas.addEventListener("pointerup", () => {
+    textarea.readOnly = false;
+    textarea.focus();
+    textarea.setSelectionRange(lastSelection, lastSelection);
+    screenTextEngine.scrollToEnd(3);
   });
   window.addEventListener("keypress", (e) => {
     if (

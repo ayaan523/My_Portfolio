@@ -149,8 +149,10 @@ export default function WebGL() {
     const renderer = new THREE.WebGLRenderer({
       canvas: canvas,
     });
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio || 1, window.innerWidth < 700 ? 1.25 : 2)
+    );
     renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(2);
     renderer.outputEncoding = THREE.sRGBEncoding;
 
     function updateCanvasSize(width: number, height: number) {
@@ -159,6 +161,9 @@ export default function WebGL() {
       camera.updateProjectionMatrix();
 
       // Update renderer
+      renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio || 1, window.innerWidth < 700 ? 1.25 : 2)
+      );
       renderer.setSize(width, height);
     }
     window.addEventListener(

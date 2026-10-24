@@ -14,22 +14,31 @@
       <a class="btn project-back-link" href="/#projects">← Back to projects</a>
       <p class="project-page-status" role="status">Loading project...</p>
       <article class="project-page-content" hidden>
-        <div class="project-detail-hero">
-          <figure class="project-detail-preview">
-            <img class="project-detail-image" />
-          </figure>
-          <header class="project-detail-copy">
-            <h1 class="project-detail-header"></h1>
-            <p class="project-detail-description"></p>
-            <p class="project-tech-label project-detail-stack-label" hidden>Tech stack</p>
-            <ul class="project-detail-stack"></ul>
-            <div class="project-actions project-detail-actions"></div>
-          </header>
+        <header class="project-detail-intro">
+          <div class="project-detail-eyebrow">
+            <span class="project-detail-number"></span>
+            <span class="project-detail-category"></span>
+            <span class="project-detail-live" hidden>Live project</span>
+          </div>
+          <h1 class="project-detail-header"></h1>
+          <p class="project-detail-description"></p>
+          <div class="project-actions project-detail-actions"></div>
+        </header>
+        <figure class="project-detail-preview" hidden>
+          <img class="project-detail-image" />
+        </figure>
+        <div class="project-detail-body">
+          <section class="project-readme-section">
+            <h2>// Project overview</h2>
+            <div class="project-readme"></div>
+          </section>
+          <aside class="project-detail-sidebar">
+            <div class="project-detail-stack-panel">
+              <h2>// Stack</h2>
+              <ul class="project-detail-stack"></ul>
+            </div>
+          </aside>
         </div>
-        <section class="project-readme-section">
-          <h2>Project README</h2>
-          <div class="project-readme"></div>
-        </section>
       </article>
     </main>
   </body>
